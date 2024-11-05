@@ -1,0 +1,122 @@
+import tkinter as tk
+from tkinter import messagebox
+
+# Book data
+books = [
+    {"title": "sense and sensability", "author": "jane austen", "price": 10.99, "stock": 5},
+    {"title": "1984", "author": "George Orwell", "price": 8.99, "stock": 3},
+    {"title": "it ends with us", "author": "coolen hoover", "price": 12.99, "stock": 4},
+    {"title": "Pride and Prejudice", "author": "Jane Austen", "price": 7.99, "stock": 6},
+    {"title": "november 9", "author": "coolen hoover","price":8.99,"stock":7}
+]
+
+# Sorting books alphabetically by title using merge sort
+def merge_sort_books(books):
+    if len(books) <= 1:
+        return books
+    mid = len(books) // 2
+    left_half = merge_sort_books(books[:mid])
+    right_half = merge_sort_books(books[mid:])
+    return merge(left_half, right_half)
+
+def merge(left, right):
+    sorted_books = []
+    while left and right:
+        if left[0]["title"].lower() <= right[0]["title"].lower():
+            sorted_books.append(left.pop(0))
+        else:
+            sorted_books.append(right.pop(0))
+    sorted_books.extend(left or right)
+    return sorted_books
+
+books = merge_sort_books(books)
+
+# Search function (binary search)
+def binary_search(books, title):
+    low, high = 0, len(books) - 1
+    while low <= high:
+        mid = (low + high) // 2
+        if books[mid]["title"].lower() == title.lower():
+            return books[mid]
+        elif books[mid]["title"].lower() < title.lower():
+            low = mid + 1
+        else:
+            high = mid - 1
+    return None
+
+# Initialize main Tkinter window
+root = tk.Tk()
+root.title("Online Bookstore")
+
+# Cart to store selected books
+cart = []
+
+# Display books in store
+def display_books():
+    listbox.delete(0, tk.END)
+    for book in books:
+        listbox.insert(tk.END, f"{book['title']} - ${book['price']} (Stock: {book['stock']})")
+
+# Add book to cart
+def add_to_cart():
+    selected_book = listbox.get(tk.ACTIVE)
+    if not selected_book:
+        messagebox.showinfo("Info", "Please select a book to add.")
+        return
+
+    title = selected_book.split(" - ")[0]
+    book = binary_search(books, title)
+    if book and book["stock"] > 0:
+        book["stock"] -= 1
+        cart.append(book)
+        messagebox.showinfo("Cart", f"Added {book['title']} to the cart.")
+        display_books()
+    else:
+        messagebox.showwarning("Warning", "Book out of stock!")
+
+# Search for a book by title
+def search_book():
+    title = search_entry.get()
+    book = binary_search(books, title)
+    if book:
+        listbox.delete(0, tk.END)
+        listbox.insert(tk.END, f"{book['title']} - ${book['price']} (Stock: {book['stock']})")
+    else:
+        messagebox.showinfo("Search", "Book not found.")
+
+# Checkout function to display cart items
+def checkout():
+    if not cart:
+        messagebox.showinfo("Cart", "Your cart is empty.")
+        return
+    total_price = sum(item["price"] for item in cart)
+    messagebox.showinfo("Checkout", f"Total Price: ${total_price:.2f}")
+    cart.clear()
+
+# UI Elements
+frame = tk.Frame(root)
+frame.pack(pady=10)
+
+# Search bar
+search_entry = tk.Entry(frame, width=30)
+search_entry.grid(row=0, column=0, padx=5)
+search_button = tk.Button(frame, text="Search", command=search_book)
+search_button.grid(row=0, column=1)
+
+# Book list display
+listbox = tk.Listbox(root, width=50, height=10)
+listbox.pack(pady=10)
+
+# Add to Cart button
+add_button = tk.Button(root, text="Add to Cart", command=add_to_cart)
+add_button.pack(pady=5)
+
+# Checkout button
+checkout_button = tk.Button(root, text="Checkout", command=checkout)
+checkout_button.pack(pady=5)
+
+# Load initial book display
+display_books()
+
+# Run the main loop
+root.mainloop()
